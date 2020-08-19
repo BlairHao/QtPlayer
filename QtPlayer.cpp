@@ -70,3 +70,27 @@ void QtPlayer::pictureScale()
 		//demuxThread->pictureScale(ui.openGLWidget->width(),ui.openGLWidget->height());
 	}
 }
+
+void QtPlayer::wheelEvent(QWheelEvent *event)
+{
+	mnWidth = ui.openGLWidget->width();
+	mnHeight = ui.openGLWidget->height();
+	QSize size;
+	if (event->delta() > 0) {
+		// 当滚轮远离使用者时
+		qDebug() << "滚轮事件 --------> 向前" << endl;
+		mnWidth = mnWidth + 40;
+		mnHeight = mnWidth * 9 / 16;
+		size.setWidth(mnWidth);
+		size.setHeight(mnHeight);
+	}
+	else {
+		// 当滚轮向使用者方向旋转时
+		qDebug() << "滚轮事件 --------> 向后" << endl;
+		mnWidth = mnWidth - 40;
+		mnHeight = mnWidth * 9 / 16;
+		size.setWidth(mnWidth);
+		size.setHeight(mnHeight);
+	}
+	ui.openGLWidget->resize(size);
+}

@@ -211,7 +211,7 @@ void XVideoWidget::initializeGL()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//创建材质显卡空间
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, mnWidth, mnHeight, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
-
+	
 	//U
 	glBindTexture(GL_TEXTURE_2D, texs[1]);
 	//放大过滤，线性插值
@@ -258,6 +258,9 @@ void XVideoWidget::paintGL()
 	fread(datas[1], 1, width*height / 4, fp);
 	fread(datas[2], 1, width*height / 4, fp);*/
 
+	//清除之前图形并将背景设置为黑色（设置为黑色纯粹个人爱好！）
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texs[0]);//0层绑定到Y材质
@@ -265,6 +268,7 @@ void XVideoWidget::paintGL()
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mnWidth, mnHeight, GL_RED, GL_UNSIGNED_BYTE, datas[0]);
 	//与shader uni遍历关联
 	glUniform1i(unis[0], 0);
+	//glPixelZoom()
 
 
 
@@ -296,56 +300,4 @@ void XVideoWidget::resizeGL(int width, int height)
 	qDebug() << "resizeGL";
 	qDebug() << "width: " << width << "   height: " << height;
 	mMutex.unlock();
-}
-
-void XVideoWidget::wheelEvent(QWheelEvent *event)
-{
-	QSize size;
-	if (event->delta() > 0) {                    // 当滚轮远离使用者时
-		//ui->textEdit->zoomIn();                // 进行放大
-		cout << "滚轮事件 --------> 向前" << endl;
-		/*mnWidth = mnWidth + 320;
-		mnHeight = mnWidth * 9 / 16;
-		size.setWidth(mnWidth);
-		size.setHeight(mnHeight);*/
-	}
-	else {                                     // 当滚轮向使用者方向旋转时
-		//ui->textEdit->zoomOut();               // 进行缩小
-		cout << "滚轮事件 --------> 向后" << endl;
-		/*mnWidth = mnWidth - 320;
-		mnHeight = mnWidth * 9 / 16;
-		size.setWidth(mnWidth);
-		size.setHeight(mnHeight); */
-
-	}
-	//this->resize(size);
-
-
-
-	/*QPoint qpMag = event->angleDelta();
-	int iMag = qpMag.y();
-	bool bUpdate = false;
-	if (iMag > 0)
-	{
-		if (m_iMag < 8)
-		{
-			m_iMag *= 2;
-			bUpdate = true;
-		}
-	}
-
-	if (iMag < 0)
-	{
-		if (m_iMag > 1)
-		{
-			m_iMag /= 2;
-			bUpdate = true;
-		}
-	}
-
-	if (bUpdate)
-	{
-		update();
-	}*/
-
 }

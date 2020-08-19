@@ -5,6 +5,7 @@
 #include "XDemuxThread.h"
 #include <QCloseEvent>
 #include <QResizeEvent>
+#include <QWheelEvent>
 
 class QtPlayer : public QWidget
 {
@@ -17,6 +18,7 @@ public:
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void closeEvent(QCloseEvent *event);
+	void wheelEvent(QWheelEvent *event);
 public slots:
 	void openFile();
 	void pausePlay();
@@ -25,4 +27,6 @@ public slots:
 private:
 	Ui::QtPlayerClass ui;
 	XDemuxThread *demuxThread = NULL;
+	int mnWidth = 0;
+	int mnHeight = 0;
 };

@@ -5,7 +5,7 @@
 #include <QGLShaderProgram>
 #include "IVideoCall.h"
 #include <mutex>
-#include <QWheelEvent>
+
 
 class XVideoWidget : public QOpenGLWidget, protected QOpenGLFunctions, public IVideoCall
 {
@@ -27,8 +27,6 @@ protected:
 	void initializeGL();
 	//´°¿Ú³ß´ç±ä»¯
 	void resizeGL(int width, int height);
-
-	void wheelEvent(QWheelEvent *event);
 
 signals:
 	//void 
