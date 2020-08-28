@@ -4,6 +4,7 @@
 #include "IVideoCall.h"
 #include "XDemux.h"
 #include "XVideoThread.h"
+#include "XAudioThread.h"
 
 struct AVFormatContext;
 class XDemuxThread : public QThread
@@ -19,6 +20,7 @@ public:
 	void StopThread();
 	int mnWidth;
 	int mnHeight;
+	long long pts = 0;
 public slots:
 	void repeatPlay();
 protected:
@@ -31,6 +33,7 @@ private:
 	XDemux *mpXDemux;
 	IVideoCall *mpVideoCall;
 	XVideoThread *mpVideoThread;
+	XAudioThread *mpAudioThread;
 	const char *m_strFilePath = "";
 
 	AVFormatContext *mpFormatCtx;

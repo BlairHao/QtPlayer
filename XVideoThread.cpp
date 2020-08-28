@@ -26,6 +26,7 @@ void XVideoThread::open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth
 	{
 		return;
 	}
+	synpts = 0;
 	mpCodecCtx = pCodecCtx;
 	pVideoCall = pCall;
 	pVideoCall->Init(nWidth, nHeight);
@@ -40,6 +41,13 @@ void XVideoThread::run()
 		if (mbIsPause)
 		{
 			m_mutex.unlock();
+			continue;
+		}
+		//ÒôÊÓÆµÍ¬²½
+		if (synpts > 0 && synpts < pDecode->mlPts)
+		{
+			m_mutex.unlock();
+			msleep(1);
 			continue;
 		}
 		AVPacket *pkt = Pop();
@@ -57,7 +65,7 @@ void XVideoThread::run()
 			if (pVideoCall)
 			{
 				pVideoCall->Repaint(pframe);
-				msleep(40);
+				//msleep(40);
 			}
 		}
 		m_mutex.unlock();

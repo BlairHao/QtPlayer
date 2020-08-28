@@ -75,7 +75,7 @@ bool Decode::Send(AVPacket *pkt)
 	{
 		m_mutex.unlock();
 		av_packet_free(&pkt);
-		cout << "avcodec_send_packet error!!!!" << endl;
+		//cout << "avcodec_send_packet error!!!!" << endl;
 		return false;
 	}
 	m_mutex.unlock();
@@ -102,9 +102,10 @@ AVFrame *Decode::Recv()
 	{
 		m_mutex.unlock();
 		av_frame_free(&pFrame);
-		cout << "avcodec_receive_frame error!!!" << endl;
+		//cout << "avcodec_receive_frame error!!!" << endl;
 		return NULL;
 	}
+	mlPts = pFrame->pts;
 	m_mutex.unlock();
-	return pFrame;
+	return pFrame; 
 }

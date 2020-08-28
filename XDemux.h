@@ -16,11 +16,14 @@ public:
 
 	void openMediaFile(const char *);
 	AVCodecContext *copyVideoParam();
+	AVCodecContext *copyAudioParam();
 	AVPacket *readOnePacket();
 	bool IsVideo(AVPacket *);
 	int mnSrcWidth;
 	int mnSrcHeight;
 	bool mbRepeatPlay;
+	int mnSampleRate;
+	int mnChannels;
 
 signals:
 	void signal_read_finish();

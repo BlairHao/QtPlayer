@@ -12,6 +12,8 @@ public:
 	~XVideoThread();
 
 	void open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth, int nHeight);
+	//同步时间，由外部传入
+	long long synpts = 0;
 protected:
 	void run();
 private:

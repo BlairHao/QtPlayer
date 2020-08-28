@@ -14,6 +14,7 @@ XDemuxThread::XDemuxThread()
 	mpXDemux = NULL;
 	mpVideoCall = NULL;
 	mpVideoThread = NULL;
+	mpAudioThread = NULL;
 	mpXDemux = new XDemux;
 	//connect(mpXDemux, SIGNAL(signal_read_finish()), this, SLOT(repeatPlay()));
 }
@@ -28,6 +29,13 @@ XDemuxThread::~XDemuxThread()
 		delete mpVideoThread;
 		mpVideoThread = NULL;
 	}
+	if (mpAudioThread)
+	{
+		mpAudioThread->mbIsExit = true;
+		mpAudioThread->wait();
+		delete mpAudioThread;
+		mpAudioThread = NULL;
+	}
 	mbIsExit = true;
 	wait();
 }
@@ -37,27 +45,29 @@ void XDemuxThread::run()
 	while (!mbIsExit)
 	{
 		mMutex.lock();
+		if (mbIsPause)
+		{
+			mMutex.unlock();
+			msleep(5);
+			continue;
+		}
 		if (!mpXDemux)
 		{
 			mMutex.unlock();
 			msleep(5);
 			continue;
 		}
-		if (mbIsPause)
-		{
-			mMutex.unlock();
-			continue;
-		}
+		
 		if (!mpXDemux->mbRepeatPlay)
 		{
-			repeatPlay();
+			//repeatPlay();
 		}
 		//ÒôÊÓÆµÍ¬²½
-		/*if (pVideoThread && m_pXAudioThread)
+		if (mpVideoThread && mpAudioThread)
 		{
-		pts = m_pXAudioThread->pts;
-		m_pXVideoThread->synpts = m_pXAudioThread->pts;
-		}*/
+			pts = mpAudioThread->pts;
+			mpVideoThread->synpts = mpAudioThread->pts;
+		}
 
 		AVPacket *pkt = mpXDemux->readOnePacket();
 		if (!pkt)
@@ -72,12 +82,13 @@ void XDemuxThread::run()
 		}
 		else
 		{
-			//if (m_pXAudioThread) m_pXAudioThread->Push(pkt);
+			if (mpAudioThread) mpAudioThread->Push(pkt);
 		}
 
 		mMutex.unlock();
 		msleep(1);
 	}
+	cout << "jkhdfjkshfjk" << endl;
 }
 
 void XDemuxThread::openMediaFile(const char *strFilePath, IVideoCall *pCall)
@@ -91,10 +102,15 @@ void XDemuxThread::openMediaFile(const char *strFilePath, IVideoCall *pCall)
 	{
 		mpVideoThread = new XVideoThread;
 	}
+	if (!mpAudioThread)
+	{
+		mpAudioThread = new XAudioThread;
+	}
 	mpVideoCall = pCall;
 	m_strFilePath = strFilePath;
 	mpXDemux->openMediaFile(strFilePath);
 	mpVideoThread->open(mpXDemux->copyVideoParam(), mpVideoCall, mpXDemux->mnSrcWidth, mpXDemux->mnSrcHeight);
+	mpAudioThread->open(mpXDemux->copyAudioParam(), mpXDemux->mnSampleRate, mpXDemux->mnChannels);
 	mMutex.unlock();
 }
 
@@ -140,8 +156,13 @@ void XDemuxThread::Start()
 	{
 		mpVideoThread = new XVideoThread;
 	}
+	if (!mpAudioThread)
+	{
+		mpAudioThread = new XAudioThread;
+	}
 	QThread::start();
 	mpVideoThread->start();
+	mpAudioThread->start();
 	mMutex.unlock();
 }
 
@@ -152,6 +173,10 @@ void XDemuxThread::pauseThread()
 	{
 		mpVideoThread->mbIsPause = !mpVideoThread->mbIsPause;
 	}
+	if (mpAudioThread)
+	{
+		mpAudioThread->mbIsPause = !mpAudioThread->mbIsPause;
+	}
 }
 
 void XDemuxThread::StopThread()
@@ -160,6 +185,10 @@ void XDemuxThread::StopThread()
 	if (mpVideoThread)
 	{
 		mpVideoThread->mbIsExit = true;
+	}
+	if (mpAudioThread)
+	{
+		mpAudioThread->mbIsExit = true;
 	}
 }
 

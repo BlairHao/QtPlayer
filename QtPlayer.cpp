@@ -39,10 +39,10 @@ void QtPlayer::openFile()
 	{
 		demuxThread = new XDemuxThread();
 	}
-	//strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";
+	//const char *strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";//CCTV1
 	demuxThread->Start();
 	demuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget);
-	//demuxThread->openMediaFile(strFilePathName.toLocal8Bit().data());
+	//demuxThread->openMediaFile(strFilePathName, ui.openGLWidget);
 }
 
 void QtPlayer::pausePlay()
@@ -52,20 +52,15 @@ void QtPlayer::pausePlay()
 
 void QtPlayer::resizeEvent(QResizeEvent *event)
 {
+	mnScaleValue = 1.0;
+	mnPaperX = 0;
+	mnPaperY = 0;
 	//ui.horizontalSlider->move(50, this->height() - 100);
 	//ui.horizontalSlider->resize(this->width() - 100, ui.horizontalSlider->height());
 	ui.widget_2->move(100, this->height() - 100);
 	ui.widget_2->resize(this->width() - 200, 100);
 	ui.openGLWidget->resize(this->size());
-	ui.openGLWidget->move(0,0);
-	mnScaleValue = 1.0;
-	mnPaperX = 0;
-	mnPaperY = 0;
-	//mnWidth = ui.openGLWidget->width();
-	//mnHeight = ui.openGLWidget->height();
-	qDebug() << "this->size(): " << this->size();
-	qDebug() << "this->width(): " << this->width() << "  this->height(): " << this->height();
-	//qDebug() << "mnWidth: " << mnWidth << "  mnHeight: " << mnHeight;
+	ui.openGLWidget->move(mnPaperX, mnPaperY);
 	updateWidthOfPerPixel();
 	mbIsWheelScale = false;
 }
@@ -117,11 +112,11 @@ void QtPlayer::onWheelValueChanged(QPoint &mouse_pos, QPoint &step) {
 	//if mouse point in paper
 	if (mRect.contains(mouse_pos)) {
 		QPoint before_resize_mouse_point_at_paper = mousePoint2PaperPoint(mouse_pos);
-		qDebug()<<"before_resize_mouse_point_at_paper: " <<before_resize_mouse_point_at_paper;
+		//qDebug()<<"before_resize_mouse_point_at_paper: " <<before_resize_mouse_point_at_paper;
 		int temp_paper_point_x = drawWidth2PaperWidth(before_resize_mouse_point_at_paper.x());
 		int temp_paper_point_y = drawWidth2PaperWidth(before_resize_mouse_point_at_paper.y());
-		qDebug()<<"temp_paper_point_x: " <<temp_paper_point_x;
-		qDebug()<<"temp_paper_point_y: " <<temp_paper_point_y;
+		//qDebug()<<"temp_paper_point_x: " <<temp_paper_point_x;
+		//qDebug()<<"temp_paper_point_y: " <<temp_paper_point_y;
 
 		//resize
 		int step_value = step.y();
@@ -139,7 +134,7 @@ void QtPlayer::onWheelValueChanged(QPoint &mouse_pos, QPoint &step) {
 
 		mnPaperX -= should_move_length.x();
 		mnPaperY -= should_move_length.y();
-		qDebug() << "OnWheelValueChanged1 paper point changed mnPaperX:  " << mnPaperX << "  mnPaperY: " << mnPaperY;
+		//qDebug() << "OnWheelValueChanged1 paper point changed mnPaperX:  " << mnPaperX << "  mnPaperY: " << mnPaperY;
 
 		update();
 
@@ -186,7 +181,7 @@ void QtPlayer::updateWidthOfPerPixel()
 	else {
 		mdWidthPerPixel = calcWidthOfPerPixel(mnScaleValue, mnPaperWidth, this->height());
 	}
-	qDebug() << "mdWidthPerPixel: " << mdWidthPerPixel;
+	//qDebug() << "mdWidthPerPixel: " << mdWidthPerPixel;
 }
 
 /**
@@ -198,9 +193,9 @@ void QtPlayer::updateWidthOfPerPixel()
  * @return width of per pixel after resize
  */
 double QtPlayer::calcWidthOfPerPixel(double &nScaleValue, int &nPaperWidth, const int &nWidgetWidth) {
-	qDebug() << "nScaleValue: " << nScaleValue
-		<< "  nPaperWidth: " << nPaperWidth 
-		<< "  nWidgetWidth: " << nWidgetWidth;
+	//qDebug() << "nScaleValue: " << nScaleValue
+	//	<< "  nPaperWidth: " << nPaperWidth 
+	//	<< "  nWidgetWidth: " << nWidgetWidth;
 	int nScaledWidgetWidth = qRound(static_cast<double>(nWidgetWidth) * nScaleValue);
 
 	double dWidgetOfPerPixel = 
@@ -229,7 +224,7 @@ void QtPlayer::setRect()
 	{
 		resizeAndMoveGLWidget();
 	}
-	qDebug() << "mRect: " << mRect;
+	//qDebug() << "mRect: " << mRect;
 }
 
 void QtPlayer::resizeAndMoveGLWidget()
@@ -240,9 +235,9 @@ void QtPlayer::resizeAndMoveGLWidget()
 
 int QtPlayer::paperWidth2DrawWidth(int &paper_width)
 {
-	qDebug() << "paperWidth2DrawWidth......";
+	//qDebug() << "paperWidth2DrawWidth......";
 	double draw_width = static_cast<double>(paper_width) / mdWidthPerPixel;
-	qDebug() << "draw_width:  " << draw_width << "   paper_width: " << paper_width << "   mdWidthPerPixel: " << mdWidthPerPixel;
+	//qDebug() << "draw_width:  " << draw_width << "   paper_width: " << paper_width << "   mdWidthPerPixel: " << mdWidthPerPixel;
 	return qRound(draw_width);
 }
 
