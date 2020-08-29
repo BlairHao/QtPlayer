@@ -33,6 +33,49 @@ void XVideoThread::open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth
 	pDecode->openCodecParam(mpCodecCtx);
 }
 
+void XVideoThread::clear()
+{
+	m_mutex.lock();
+	pDecode->clear();
+	m_mutex.unlock();
+	DecodeThread::clear();
+}
+
+void XVideoThread::close()
+{
+
+}
+
+bool XVideoThread::repaintPts(AVPacket *pkt, long long seekPts)
+{
+	m_mutex.lock();
+	bool bRet = pDecode->Send(pkt);
+	if (!bRet)
+	{
+		m_mutex.unlock();
+		return true;
+	}
+	AVFrame *frame = pDecode->Recv();
+	if (!frame)
+	{
+		m_mutex.unlock();
+		return false;
+	}
+	//µ½´ïÎ»ÖÃ
+	if (pDecode->mlPts >= seekPts)
+	{
+		if (pVideoCall)
+		{
+			pVideoCall->Repaint(frame);
+		}
+		m_mutex.unlock();
+		return true;
+	}
+	freeFrame(&frame);
+	m_mutex.unlock();
+	return false;
+}
+
 void XVideoThread::run()
 {
 	while (!mbIsExit)

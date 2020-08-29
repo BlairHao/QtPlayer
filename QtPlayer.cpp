@@ -12,15 +12,23 @@ QtPlayer::QtPlayer(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	setFocusPolicy(Qt::StrongFocus);
+	installEventFilter(this);
+	ui.pushButton->installEventFilter(this);
+	ui.pushButton_2->installEventFilter(this);
+	ui.horizontalSlider->installEventFilter(this);
 	mbIsWheelScale = false;
+	mbSliderPressed = false;
 	mnScaleValue = 1.0;
 	mnPaperWidth = 800;
 	mnPaperHeight = 450;
-	//openFile();
 	connect(ui.pushButton, SIGNAL(clicked()), this, SLOT(openFile()));
 	connect(ui.pushButton_2, SIGNAL(clicked()), this, SLOT(pausePlay()));
-	connect(ui.openGLWidget, SIGNAL(resized()), this, SLOT(pictureScale()));
+	connect(ui.horizontalSlider, SIGNAL(sliderPressed()), this, SLOT(sliderPressedSlot()));
+	connect(ui.horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(sliderReleasedSlot()));
+	connect(ui.horizontalSlider, SIGNAL(sliderMoved(int)), this, SLOT(sliderMovedSlot(int)));
 	updateWidthOfPerPixel();
+	startTimer(40);
 }
 
 QtPlayer::~QtPlayer()
@@ -73,13 +81,112 @@ void QtPlayer::closeEvent(QCloseEvent *event)
 	}
 }
 
-void QtPlayer::pictureScale()
+void QtPlayer::sliderPressedSlot()
 {
-	//cout << "uuuuuuuuuuu" << endl;
+	mbSliderPressed = true;
+}
+
+void QtPlayer::sliderReleasedSlot()
+{
+	mbSliderPressed = false;
+	double ratio = 0.0;
+	ratio = (double)ui.horizontalSlider->value() / (double)ui.horizontalSlider->maximum();
+	qDebug() << "QtPlayer ratio: " << ratio;
+	demuxThread->seek(ratio);
+}
+
+void QtPlayer::sliderMovedSlot(int nPosition)
+{
+	mbSliderPressed = true;
+}
+
+void QtPlayer::timerEvent(QTimerEvent *event)
+{
+	if (mbSliderPressed)
+	{
+		return;
+	}
 	if (demuxThread)
 	{
-		//demuxThread->pictureScale(ui.openGLWidget->width(),ui.openGLWidget->height());
+		long long totalMs = demuxThread->mlTotalMs;
+		if (totalMs > 0)
+		{
+			double ratio = (double)demuxThread->pts / (double)totalMs;
+			int nValue = ui.horizontalSlider->maximum()*ratio;
+			ui.horizontalSlider->setValue(nValue);
+		}
 	}
+}
+
+void QtPlayer::fastWard(double offset)
+{
+	if (mbSliderPressed)
+	{
+		return;
+	}
+	double ratio = 0.0;
+	long long curPts = demuxThread->pts;
+	qDebug() << "fastWard curPts1: " << curPts;
+	long long totalMs = demuxThread->mlTotalMs;
+	if ((curPts >= (totalMs-offset)) && (curPts <totalMs))
+	{
+		curPts = totalMs;
+	}
+	else
+	{
+		curPts += offset;
+	}
+	qDebug() << "fastWard curPts2: " << curPts;
+	ratio = (double)curPts / (double)totalMs;
+	qDebug() << "fastWard ratio: " << ratio;
+	demuxThread->seek(ratio);
+}
+
+void QtPlayer::backWard(double offset)
+{
+	if (mbSliderPressed)
+	{
+		return;
+	}
+	double ratio = 0.0;
+	long long curPts = demuxThread->pts;
+	qDebug() << "backWard curPts3: " << curPts;
+	long long totalMs = demuxThread->mlTotalMs;
+	if (curPts <= offset)
+	{
+		curPts = 0;
+	}
+	else
+	{
+		curPts -= offset;
+	}
+	ratio = (double)curPts / (double)totalMs;
+	qDebug() << "backWard curPts4: " << curPts;
+	qDebug() << "backWard ratio: " << ratio;
+	demuxThread->seek(ratio);
+}
+
+void QtPlayer::keyPressEvent(QKeyEvent *e)
+{
+	cout << "e->key(): " << e->key();
+}
+
+bool QtPlayer::eventFilter(QObject *target, QEvent *event)
+{
+	if (event->type() == QEvent::KeyPress)
+	{
+		QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+		int i = 0;
+		if (keyEvent->key() == Qt::Key_Left)
+		{
+			backWard(mnOffset);
+		}
+		else if (keyEvent->key() == Qt::Key_Right)
+		{
+			fastWard(mnOffset);
+		}
+	}
+	return false;
 }
 
 void QtPlayer::wheelEvent(QWheelEvent *event)

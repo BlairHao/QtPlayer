@@ -1,5 +1,8 @@
 #include "DecodeThread.h"
-
+extern "C"
+{
+#include "libavcodec/avcodec.h"
+}
 
 
 DecodeThread::DecodeThread()
@@ -13,6 +16,7 @@ DecodeThread::DecodeThread()
 
 DecodeThread::~DecodeThread()
 {
+	close();
 }
 
 AVPacket *DecodeThread::Pop()
@@ -48,4 +52,36 @@ bool DecodeThread::Push(AVPacket *pkt)
 		m_mutex.unlock();
 	}
 	return true;
+}
+
+void DecodeThread::clear()
+{
+	m_mutex.lock();
+	while (!m_packetList.empty())
+	{
+		AVPacket *pkt = m_packetList.front();
+		freePacket(&pkt);
+		m_packetList.pop_front();
+	}
+	m_mutex.unlock();
+}
+
+void DecodeThread::close()
+{
+	clear();
+
+	//等待线程退出
+	mbIsExit = true;
+	wait();
+}
+
+void DecodeThread::freePacket(AVPacket **pkt)
+{
+	if (!pkt || !(*pkt))return;
+	av_packet_free(pkt);
+}
+
+void DecodeThread::freeFrame(AVFrame **frame)
+{
+
 }

@@ -7,6 +7,8 @@
 #include <QResizeEvent>
 #include <QWheelEvent>
 #include <QPaintEvent>
+#include <QTimerEvent>
+#include <QKeyEvent>
 
 class QtPlayer : public QWidget
 {
@@ -26,20 +28,28 @@ public:
 	QPoint mousePoint2PaperPoint(QPoint &point);
 	int drawWidth2PaperWidth(const int &draw_width);
 	void resizeAndMoveGLWidget();
+	void fastWard(double);
+	void backWard(double);
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void closeEvent(QCloseEvent *event);
 	void wheelEvent(QWheelEvent *event);
 	void paintEvent(QPaintEvent *event);
+	void timerEvent(QTimerEvent *event);
+	void keyPressEvent(QKeyEvent *e);
+	bool eventFilter(QObject *target, QEvent *event);
 public slots:
 	void openFile();
 	void pausePlay();
-	void pictureScale();
+	void sliderPressedSlot();
+	void sliderReleasedSlot();
+	void sliderMovedSlot(int);
 
 private:
 	Ui::QtPlayerClass ui;
 
 	bool mbIsWheelScale;
+	bool mbSliderPressed;
 
 	const double SCALE_VALUE_MAX = 20.0;
 	const double SCALE_VALUE_MIN = 0.5;
@@ -53,6 +63,8 @@ private:
 	int mnPaperY = 0;
 	int mnPaperWidth = 1000;
 	int mnPaperHeight = 1000;
+
+	double mnOffset = 5000;
 	
 	QRect mRect;
 	XDemuxThread *demuxThread = NULL;

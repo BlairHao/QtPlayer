@@ -118,7 +118,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QSlider" name="horizontalSlider">
+     <widget class="XSlider" name="horizontalSlider">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -146,6 +146,11 @@
    <class>XVideoWidget</class>
    <extends>QOpenGLWidget</extends>
    <header>xvideowidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>XSlider</class>
+   <extends>QSlider</extends>
+   <header location="global">XSlider.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -12,6 +12,9 @@ public:
 	~XVideoThread();
 
 	void open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth, int nHeight);
+	virtual void clear();
+	virtual void close();
+	bool repaintPts(AVPacket *pkt, long long seekPts);
 	//同步时间，由外部传入
 	long long synpts = 0;
 protected:

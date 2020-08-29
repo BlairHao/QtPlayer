@@ -24,6 +24,7 @@ XDemux::XDemux(QObject *parent)
 	mnAudioIndex = 0;
 	mnSampleRate = 0;
 	mnChannels = 0;
+	mlTotalMs = 0;
 	mbRepeatPlay = true;
 	connect(this, SIGNAL(signal_read_finish()), this, SLOT(test()));
 }
@@ -31,6 +32,7 @@ XDemux::XDemux(QObject *parent)
 
 XDemux::~XDemux()
 {
+	close();
 }
 
 void XDemux::test()
@@ -67,6 +69,10 @@ void XDemux::openMediaFile(const char *strFilePath)
 	//cout << "extensions: " << mpFormatCtx->iformat->extensions << endl;
 	//cout << "long_name: " << mpFormatCtx->iformat->long_name<< endl;
 	//cout << "name: " << mpFormatCtx->iformat->name << endl;
+
+	//总时长(毫秒)
+	mlTotalMs = mpFormatCtx->duration / (AV_TIME_BASE / 1000);
+	cout << "mlTotalMs: " << mlTotalMs << endl;
 
 	//视频流信息
 	mnVideoIndex = av_find_best_stream(mpFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, -1);
@@ -195,4 +201,83 @@ bool XDemux::IsVideo(AVPacket *pkt)
 	}
 	return false;
 }
+
+//清空读取缓冲
+void XDemux::clear()
+{
+	m_mutex.lock();
+	if (!mpFormatCtx)
+	{
+		m_mutex.unlock();
+		return;
+	}
+	//清理读取缓冲
+	avformat_flush(mpFormatCtx);
+	m_mutex.unlock();
+}
+
+void XDemux::close()
+{
+	m_mutex.lock();
+	if (!mpFormatCtx)
+	{
+		m_mutex.unlock();
+		return;
+	}
+	avformat_close_input(&mpFormatCtx);
+	mlTotalMs = 0;
+	m_mutex.unlock();
+}
+
+//seek 位置 position 0.0~1.0
+bool XDemux::seek(double nPosition)
+{
+	m_mutex.lock();
+	if (!mpFormatCtx)
+	{
+		m_mutex.unlock();
+		return false;
+	}
+	//清理读取缓冲
+	avformat_flush(mpFormatCtx);
+
+	long long seekPos = 0;
+	seekPos = mpFormatCtx->streams[mnVideoIndex]->duration * nPosition;
+	cout << "XDemux nPosition: " << nPosition<<"  seekPos: "<< seekPos;
+	int nRet = av_seek_frame(mpFormatCtx, mnVideoIndex, seekPos, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
+	m_mutex.unlock();
+	if (nRet < 0)
+	{
+		return false;
+	}
+	return true;
+}
+
+AVPacket *XDemux::readVideo()
+{
+	m_mutex.lock();
+	if (!mpFormatCtx)
+	{
+		m_mutex.unlock();
+		return NULL;
+	}
+	m_mutex.unlock();
+	AVPacket *pkt = NULL;
+	for (int i=0; i<20; i++)
+	{
+		pkt = readOnePacket();
+		if (!pkt)
+		{
+			break;
+		}
+		if (pkt->stream_index == mnVideoIndex)
+		{
+			break;
+		}
+		av_packet_free(&pkt);
+	}
+	//cout << "pkt->pts: " << pkt->pts*(1000 * (r2d(mpFormatCtx->streams[pkt->stream_index]->time_base)));
+	return pkt;
+}
+
 

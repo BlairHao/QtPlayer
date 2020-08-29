@@ -122,6 +122,7 @@
     <ClCompile Include="XDemux.cpp" />
     <ClCompile Include="XDemuxThread.cpp" />
     <ClCompile Include="XResample.cpp" />
+    <ClCompile Include="XSlider.cpp" />
     <ClCompile Include="XVideoThread.cpp" />
     <ClCompile Include="XVideoWidget.cpp" />
   </ItemGroup>
@@ -149,6 +150,7 @@
     <ClInclude Include="XAudioThread.h" />
     <ClInclude Include="XDemuxThread.h" />
     <ClInclude Include="XResample.h" />
+    <ClInclude Include="XSlider.h" />
     <ClInclude Include="XVideoThread.h" />
     <QtMoc Include="XVideoWidget.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets</IncludePath>

@@ -1,4 +1,7 @@
 <RCC>
-    <qresource prefix="QtPlayer">
+    <qresource prefix="/slider">
+      <file>Resources/soundsliderbk.png</file>
+      <file>Resources/soundsliderpos.png</file>
+      <file>Resources/soundsliderselect.png</file>
     </qresource>
 </RCC>

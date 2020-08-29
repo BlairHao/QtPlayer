@@ -18,9 +18,12 @@ public:
 	void Start();
 	void pauseThread();
 	void StopThread();
+	void clear();
+	void seek(double nPosition);
 	int mnWidth;
 	int mnHeight;
 	long long pts = 0;
+	long long mlTotalMs = 0;
 public slots:
 	void repeatPlay();
 protected:

@@ -13,6 +13,9 @@ public:
 	void openCodecParam(AVCodecContext *);
 	bool Send(AVPacket *);
 	AVFrame *Recv();
+	void clear();
+	void close();
+	//当前解码到的pts
 	long long mlPts = 0;
 private:
 	AVCodecContext *mpCodecCtx;

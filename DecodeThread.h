@@ -4,6 +4,7 @@
 #include <list>
 
 struct AVPacket;
+struct AVFrame;
 
 class DecodeThread : public QThread
 {
@@ -13,6 +14,10 @@ public:
 
 	virtual AVPacket *Pop();
 	virtual bool Push(AVPacket *);
+	virtual void clear();
+	virtual void close();
+	void freePacket(AVPacket **pkt);
+	void freeFrame(AVFrame **frame);
 	bool mbIsExit;
 	bool mbIsPause;
 private:

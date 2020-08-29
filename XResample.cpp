@@ -27,7 +27,7 @@ bool XResample::open(AVCodecContext *param)
 	//如果mpSwrCtx为NULL会分配空间
 	mpSwrCtx = 0;
 	mpSwrCtx = swr_alloc_set_opts(mpSwrCtx,
-		av_get_default_channel_layout(2),//输出格式
+		av_get_default_channel_layout(param->channels),//输出格式
 		(AVSampleFormat)outFormat,       //输出样本格式 1 AV_SAMPLE_FMT_S16
 		param->sample_rate,              //输出采样率
 		av_get_default_channel_layout(param->channels),//输入格式

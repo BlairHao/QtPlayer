@@ -76,7 +76,8 @@ void XAudioThread::run()
 
 void XAudioThread::close()
 {
-	//DecodeThread::close();
+	pDecode->close();
+	DecodeThread::close();
 	if (!mpResample)
 	{
 		mpResample->close();
@@ -96,7 +97,8 @@ void XAudioThread::close()
 
 void XAudioThread::clear()
 {
-	//DecodeThread::clear();
+	pDecode->clear();
+	DecodeThread::clear();
 	mMutex.lock();
 	if (mpAudioPlay)
 	{

@@ -19,6 +19,7 @@ Decode::Decode()
 
 Decode::~Decode()
 {
+	close();
 }
 
 /**
@@ -108,4 +109,27 @@ AVFrame *Decode::Recv()
 	mlPts = pFrame->pts;
 	m_mutex.unlock();
 	return pFrame; 
+}
+
+void Decode::clear()
+{
+	m_mutex.lock();
+	//«Â¿ÌΩ‚¬Îª∫≥Â
+	if (mpCodecCtx)
+	{
+		avcodec_flush_buffers(mpCodecCtx);
+	}
+	m_mutex.unlock();
+}
+
+void Decode::close()
+{
+	m_mutex.lock();
+	if (mpCodecCtx)
+	{
+		avcodec_close(mpCodecCtx);
+		avcodec_free_context(&mpCodecCtx);
+	}
+	mlPts = 0;
+	m_mutex.unlock();
 }

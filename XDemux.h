@@ -19,11 +19,17 @@ public:
 	AVCodecContext *copyAudioParam();
 	AVPacket *readOnePacket();
 	bool IsVideo(AVPacket *);
+	//Çå¿Õ¶ÁÈ¡»º³å
+	void clear();
+	void close();
+	bool seek(double nPosition);
+	AVPacket *readVideo();
 	int mnSrcWidth;
 	int mnSrcHeight;
 	bool mbRepeatPlay;
 	int mnSampleRate;
 	int mnChannels;
+	int mlTotalMs;
 
 signals:
 	void signal_read_finish();

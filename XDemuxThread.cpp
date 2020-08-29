@@ -111,6 +111,9 @@ void XDemuxThread::openMediaFile(const char *strFilePath, IVideoCall *pCall)
 	mpXDemux->openMediaFile(strFilePath);
 	mpVideoThread->open(mpXDemux->copyVideoParam(), mpVideoCall, mpXDemux->mnSrcWidth, mpXDemux->mnSrcHeight);
 	mpAudioThread->open(mpXDemux->copyAudioParam(), mpXDemux->mnSampleRate, mpXDemux->mnChannels);
+	//总时长(毫秒)
+	mlTotalMs = mpXDemux->mlTotalMs;
+	cout << "mlTotalMs: " << mlTotalMs << endl;
 	mMutex.unlock();
 }
 
@@ -200,3 +203,63 @@ void XDemuxThread::repeatPlay()
 		mpVideoThread->open(mpXDemux->copyVideoParam(), mpVideoCall, mpXDemux->mnSrcWidth, mpXDemux->mnSrcHeight);
 	}
 }
+
+void XDemuxThread::clear()
+{
+	mMutex.lock();
+	if (mpXDemux)
+	{
+		mpXDemux->clear();
+	}
+	if (mpVideoThread)
+	{
+		mpVideoThread->clear();
+	}
+	if (mpAudioThread)
+	{
+		mpAudioThread->clear();
+	}
+	mMutex.unlock();
+}
+
+void XDemuxThread::seek(double nPosition)
+{
+	clear();
+
+	mMutex.lock();
+	bool status = this->mbIsPause;
+	mMutex.unlock();
+
+	pauseThread();
+	
+	mMutex.lock();
+	if (mpXDemux)
+	{
+		mpXDemux->seek(nPosition);
+	}
+	//实际要显示的pts
+	long long seekPos = nPosition * mpXDemux->mlTotalMs;
+	cout << "seekPos: " << seekPos;
+	while (!mbIsExit)
+	{
+		AVPacket *pkt = mpXDemux->readVideo();
+		if (!pkt)
+		{
+			break;
+		}
+		//如果解码到seekpts
+		if (mpVideoThread->repaintPts(pkt,seekPos))
+		{
+			this->pts = seekPos;
+			break;
+		}
+	}
+	mMutex.unlock();
+
+	//seek是非暂停状态
+	if (!status)
+	{
+		pauseThread();
+	}
+}
+
