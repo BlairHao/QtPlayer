@@ -50,6 +50,7 @@ bool DecodeThread::Push(AVPacket *pkt)
 			break;
 		}
 		m_mutex.unlock();
+		msleep(1);
 	}
 	return true;
 }
@@ -68,7 +69,7 @@ void DecodeThread::clear()
 
 void DecodeThread::close()
 {
-	clear();
+	//clear();
 
 	//等待线程退出
 	mbIsExit = true;
@@ -83,5 +84,6 @@ void DecodeThread::freePacket(AVPacket **pkt)
 
 void DecodeThread::freeFrame(AVFrame **frame)
 {
-
+	if (!frame || !(*frame))return;
+	av_frame_free(frame);
 }
