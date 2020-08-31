@@ -166,11 +166,6 @@ void QtPlayer::backWard(double offset)
 	demuxThread->seek(ratio);
 }
 
-void QtPlayer::keyPressEvent(QKeyEvent *e)
-{
-	cout << "e->key(): " << e->key();
-}
-
 bool QtPlayer::eventFilter(QObject *target, QEvent *event)
 {
 	if (event->type() == QEvent::KeyPress)

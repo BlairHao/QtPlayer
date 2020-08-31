@@ -8,7 +8,6 @@
 #include <QWheelEvent>
 #include <QPaintEvent>
 #include <QTimerEvent>
-#include <QKeyEvent>
 
 class QtPlayer : public QWidget
 {
@@ -36,7 +35,6 @@ protected:
 	void wheelEvent(QWheelEvent *event);
 	void paintEvent(QPaintEvent *event);
 	void timerEvent(QTimerEvent *event);
-	void keyPressEvent(QKeyEvent *e);
 	bool eventFilter(QObject *target, QEvent *event);
 public slots:
 	void openFile();
@@ -64,7 +62,7 @@ private:
 	int mnPaperWidth = 1000;
 	int mnPaperHeight = 1000;
 
-	double mnOffset = 5000;
+	double mnOffset = 10000;
 	
 	QRect mRect;
 	XDemuxThread *demuxThread = NULL;
