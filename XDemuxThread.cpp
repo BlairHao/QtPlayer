@@ -91,7 +91,7 @@ void XDemuxThread::run()
 	cout << "jkhdfjkshfjk" << endl;
 }
 
-void XDemuxThread::openMediaFile(const char *strFilePath, IVideoCall *pCall)
+bool XDemuxThread::openMediaFile(const char *strFilePath, IVideoCall *pCall)
 {
 	mMutex.lock();
 	if (!mpXDemux)
@@ -108,50 +108,23 @@ void XDemuxThread::openMediaFile(const char *strFilePath, IVideoCall *pCall)
 	}
 	mpVideoCall = pCall;
 	m_strFilePath = strFilePath;
-	mpXDemux->openMediaFile(strFilePath);
-	mpVideoThread->open(mpXDemux->copyVideoParam(), mpVideoCall, mpXDemux->mnSrcWidth, mpXDemux->mnSrcHeight);
-	mpAudioThread->open(mpXDemux->copyAudioParam(), mpXDemux->mnSampleRate, mpXDemux->mnChannels);
+	bool bRet = mpXDemux->openMediaFile(strFilePath);
+	if (!bRet)
+	{
+		mMutex.unlock();
+		return false;
+	}
+	bRet = mpVideoThread->open(mpXDemux->copyVideoParam(), mpVideoCall, mpXDemux->mnSrcWidth, mpXDemux->mnSrcHeight);
+	bRet = mpAudioThread->open(mpXDemux->copyAudioParam(), mpXDemux->mnSampleRate, mpXDemux->mnChannels);
 	//总时长(毫秒)
 	mlTotalMs = mpXDemux->mlTotalMs;
+	mnWidth = mpXDemux->mnSrcWidth;
+	mnHeight = mpXDemux->mnSrcHeight;
 	cout << "mlTotalMs: " << mlTotalMs << endl;
 	mMutex.unlock();
+	return bRet;
 }
 
-void XDemuxThread::openMediaFile(const char *strFilePath)
-{
-	/***********  解封装  ************/
-	AVDictionary *p_option = NULL;
-
-	//设置rtsp流的传输方式为tcp
-	av_dict_set(&p_option, "rtsp_transport", "tcp", 0);
-	//设置最大的网络延时时间为500毫秒
-	av_dict_set(&p_option, "max_delay", "500", 0);
-
-	mpFormatCtx = avformat_alloc_context();
-	int nRet = avformat_open_input(&mpFormatCtx, strFilePath, 0, NULL);
-	if (nRet != 0)
-	{
-		avformat_free_context(mpFormatCtx);
-		cout << "avformat_open_input error!!!" << endl;
-		return;
-	}
-	nRet = avformat_find_stream_info(mpFormatCtx, NULL);
-	if (nRet < 0)
-	{
-		cout << "avformat_find_stream_info error!!!" << endl;
-		return;
-	}
-	cout << "extensions: " << mpFormatCtx->iformat->extensions << endl;
-	cout << "long_name: " << mpFormatCtx->iformat->long_name << endl;
-	cout << "name: " << mpFormatCtx->iformat->name << endl;
-
-	mnVideoIndex = av_find_best_stream(mpFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, -1);
-	mnAudioIndex = av_find_best_stream(mpFormatCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, -1);
-	mnWidth = mpFormatCtx->streams[mnVideoIndex]->codec->width;
-	mnHeight = mpFormatCtx->streams[mnVideoIndex]->codec->height;
-	cout << "mnWidth: " << mnWidth << endl;
-	cout << "mnHeight: " << mnHeight << endl;
-}
 void XDemuxThread::Start()
 {
 	mMutex.lock();
@@ -169,16 +142,16 @@ void XDemuxThread::Start()
 	mMutex.unlock();
 }
 
-void XDemuxThread::pauseThread()
+void XDemuxThread::pauseThread(bool bIsPause)
 {
-	mbIsPause = !mbIsPause;
+	mbIsPause = bIsPause;
 	if (mpVideoThread)
 	{
-		mpVideoThread->mbIsPause = !mpVideoThread->mbIsPause;
+		mpVideoThread->mbIsPause = bIsPause;
 	}
 	if (mpAudioThread)
 	{
-		mpAudioThread->mbIsPause = !mpAudioThread->mbIsPause;
+		mpAudioThread->mbIsPause = bIsPause;
 	}
 }
 
@@ -227,19 +200,16 @@ void XDemuxThread::seek(double nPosition)
 	clear();
 
 	mMutex.lock();
-	bool status = this->mbIsPause;
-	mMutex.unlock();
 
-	pauseThread();
+	pauseThread(true);
 	
-	mMutex.lock();
 	if (mpXDemux)
 	{
 		mpXDemux->seek(nPosition);
 	}
 	//实际要显示的pts
 	long long seekPos = nPosition * mpXDemux->mlTotalMs;
-	cout << "seekPos: " << seekPos;
+	cout << "seekPos: " << seekPos<<endl;
 	while (!mbIsExit)
 	{
 		AVPacket *pkt = mpXDemux->readVideo();
@@ -254,12 +224,12 @@ void XDemuxThread::seek(double nPosition)
 			break;
 		}
 	}
-	mMutex.unlock();
 
 	//seek是非暂停状态
-	if (!status)
+	if (mbIsPause)
 	{
-		pauseThread();
+		pauseThread(false);
 	}
+	mMutex.unlock();
 }
 

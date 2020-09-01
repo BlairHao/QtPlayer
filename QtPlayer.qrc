@@ -4,4 +4,16 @@
       <file>Resources/soundsliderpos.png</file>
       <file>Resources/soundsliderselect.png</file>
     </qresource>
+    <qresource prefix="/button">
+      <file>Resources/icon/stop_normal.png</file>
+      <file>Resources/icon/stop_active.png</file>
+      <file>Resources/icon/previous_normal.png</file>
+      <file>Resources/icon/previous_active.png</file>
+      <file>Resources/icon/play_normal.png</file>
+      <file>Resources/icon/play_active.png</file>
+      <file>Resources/icon/pause_normal.png</file>
+      <file>Resources/icon/pause_active.png</file>
+      <file>Resources/icon/next_normal.png</file>
+      <file>Resources/icon/next_active.png</file>
+    </qresource>
 </RCC>

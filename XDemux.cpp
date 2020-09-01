@@ -40,8 +40,9 @@ void XDemux::test()
 	cout << "ahsgdhjashdk" << endl;
 }
 
-void XDemux::openMediaFile(const char *strFilePath)
+bool XDemux::openMediaFile(const char *strFilePath)
 {
+	close();
 	mbRepeatPlay = true;
 	/***********  ½â·â×°  ************/
 	AVDictionary *p_option = NULL;
@@ -58,13 +59,13 @@ void XDemux::openMediaFile(const char *strFilePath)
 	{
 		avformat_free_context(mpFormatCtx);
 		cout << "avformat_open_input error!!!" << endl;
-		return;
+		return false;
 	}
 	nRet = avformat_find_stream_info(mpFormatCtx, NULL);
 	if (nRet < 0)
 	{ 
 		cout << "avformat_find_stream_info error!!!" << endl;
-		return;
+		return false;
 	}
 	//cout << "extensions: " << mpFormatCtx->iformat->extensions << endl;
 	//cout << "long_name: " << mpFormatCtx->iformat->long_name<< endl;
@@ -91,6 +92,7 @@ void XDemux::openMediaFile(const char *strFilePath)
 	mnChannels = mpFormatCtx->streams[mnAudioIndex]->codec->channels;
 	cout << "mnSampleRate: " << mnSampleRate << endl;
 	cout << "mnChannels: " << mnChannels << endl;
+	return true;
 }
 
 AVCodecContext *XDemux::copyVideoParam()
@@ -243,7 +245,7 @@ bool XDemux::seek(double nPosition)
 
 	long long seekPos = 0;
 	seekPos = mpFormatCtx->streams[mnVideoIndex]->duration * nPosition;
-	cout << "XDemux nPosition: " << nPosition<<"  seekPos: "<< seekPos;
+	cout << "XDemux nPosition: " << nPosition<<"  seekPos: "<< seekPos<<endl;
 	int nRet = av_seek_frame(mpFormatCtx, mnVideoIndex, seekPos, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
 	m_mutex.unlock();
 	if (nRet < 0)

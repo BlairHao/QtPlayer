@@ -29,6 +29,7 @@ public:
 	void resizeAndMoveGLWidget();
 	void fastWard(double);
 	void backWard(double);
+	void modPlayStatus(bool bIsPause);
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void closeEvent(QCloseEvent *event);
@@ -48,6 +49,8 @@ private:
 
 	bool mbIsWheelScale;
 	bool mbSliderPressed;
+	bool mbIsHide;
+	bool mbIsPause;
 
 	const double SCALE_VALUE_MAX = 20.0;
 	const double SCALE_VALUE_MIN = 0.5;

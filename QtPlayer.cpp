@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QDateTime>
 #include <QString>
+#include <QLatin1Char>
 
 using namespace std;
 
@@ -14,26 +15,72 @@ QtPlayer::QtPlayer(QWidget *parent)
 
 	setFocusPolicy(Qt::StrongFocus);
 	installEventFilter(this);
-	ui.pushButton->installEventFilter(this);
-	ui.pushButton_2->installEventFilter(this);
+	ui.stop_btn->installEventFilter(this);
+	ui.stop_btn->installEventFilter(this);
+	ui.previous_btn->installEventFilter(this);
+	ui.play_pause_btn->installEventFilter(this);
+	ui.next_btn->installEventFilter(this);
 	ui.horizontalSlider->installEventFilter(this);
 	mbIsWheelScale = false;
 	mbSliderPressed = false;
+	mbIsHide = false;
+	mbIsPause = false;
 	mnScaleValue = 1.0;
 	mnPaperWidth = 800;
 	mnPaperHeight = 450;
-	connect(ui.pushButton, SIGNAL(clicked()), this, SLOT(openFile()));
-	connect(ui.pushButton_2, SIGNAL(clicked()), this, SLOT(pausePlay()));
+	connect(ui.open_btn, SIGNAL(clicked()), this, SLOT(openFile()));
+	connect(ui.play_pause_btn, SIGNAL(clicked()), this, SLOT(pausePlay()));
 	connect(ui.horizontalSlider, SIGNAL(sliderPressed()), this, SLOT(sliderPressedSlot()));
 	connect(ui.horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(sliderReleasedSlot()));
 	connect(ui.horizontalSlider, SIGNAL(sliderMoved(int)), this, SLOT(sliderMovedSlot(int)));
 	updateWidthOfPerPixel();
 	startTimer(40);
+
+	ui.stop_btn->setFixedSize(32, 32);
+	ui.stop_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/stop_normal.png);}"
+		"QPushButton:hover{border-image: url(:/button/Resources/icon/stop_active.png);}"
+		"QPushButton:pressed{border-image: url(:/button/Resources/icon/stop_normal.png);}"
+		"QPushButton {background-color:transparent;}");
+	ui.previous_btn->setFixedSize(32, 32);
+	ui.previous_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/previous_normal.png);}"
+		"QPushButton:hover{border-image: url(:/button/Resources/icon/previous_active.png);}"
+		"QPushButton:pressed{border-image: url(:/button/Resources/icon/previous_normal.png);}"
+		"QPushButton {background-color:transparent;}");
+	ui.play_pause_btn->setFixedSize(32, 32);
+	ui.play_pause_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/play_normal.png);}"
+		"QPushButton:hover{border-image: url(:/button/Resources/icon/play_active.png);}"
+		"QPushButton:pressed{border-image: url(:/button/Resources/icon/play_normal.png);}"
+		"QPushButton {background-color:transparent;}");
+	ui.next_btn->setFixedSize(32, 32);
+	ui.next_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/next_normal.png);}"
+		"QPushButton:hover{border-image: url(:/button/Resources/icon/next_active.png);}"
+		"QPushButton:pressed{border-image: url(:/button/Resources/icon/next_normal.png);}"
+		"QPushButton {background-color:transparent;}");
 }
 
 QtPlayer::~QtPlayer()
 {
 
+}
+
+void QtPlayer::modPlayStatus(bool bIsPause)
+{
+	if (bIsPause)
+	{
+		ui.play_pause_btn->setFixedSize(32, 32);
+		ui.play_pause_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/pause_normal.png);}"
+			"QPushButton:hover{border-image: url(:/button/Resources/icon/pause_active.png);}"
+			"QPushButton:pressed{border-image: url(:/button/Resources/icon/pause_normal.png);}"
+			"QPushButton {background-color:transparent;}");
+	}
+	else
+	{
+		ui.play_pause_btn->setFixedSize(32, 32);
+		ui.play_pause_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/play_normal.png);}"
+			"QPushButton:hover{border-image: url(:/button/Resources/icon/play_active.png);}"
+			"QPushButton:pressed{border-image: url(:/button/Resources/icon/play_normal.png);}"
+			"QPushButton {background-color:transparent;}");
+	}
 }
 void QtPlayer::openFile()
 {
@@ -49,13 +96,31 @@ void QtPlayer::openFile()
 	}
 	//const char *strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";//CCTV1
 	demuxThread->Start();
-	demuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget);
+	if (demuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget))
+	{
+		ui.open_btn->hide();
+		mbIsHide = true;
+		modPlayStatus(true);
+		mbIsPause = false;
+	}
 	//demuxThread->openMediaFile(strFilePathName, ui.openGLWidget);
 }
 
 void QtPlayer::pausePlay()
 {
-	demuxThread->pauseThread();
+	if (demuxThread)
+	{
+		if (mbIsPause)
+		{
+			demuxThread->pauseThread(false);
+		}
+		else
+		{
+			demuxThread->pauseThread(true);
+		}
+		modPlayStatus(mbIsPause);
+		mbIsPause = !mbIsPause;
+	}
 }
 
 void QtPlayer::resizeEvent(QResizeEvent *event)
@@ -63,10 +128,11 @@ void QtPlayer::resizeEvent(QResizeEvent *event)
 	mnScaleValue = 1.0;
 	mnPaperX = 0;
 	mnPaperY = 0;
-	//ui.horizontalSlider->move(50, this->height() - 100);
-	//ui.horizontalSlider->resize(this->width() - 100, ui.horizontalSlider->height());
-	ui.widget_2->move(100, this->height() - 100);
-	ui.widget_2->resize(this->width() - 200, 100);
+	int nBtnX = this->width() / 2 - ui.open_btn->width() / 2;
+	int nBtnY = this->height() / 2 - ui.open_btn->height() / 2;
+	ui.open_btn->move(nBtnX, nBtnY);
+	ui.widget_2->move(50, this->height() - 100);
+	ui.widget_2->resize(this->width() - 100, 100);
 	ui.openGLWidget->resize(this->size());
 	ui.openGLWidget->move(mnPaperX, mnPaperY);
 	updateWidthOfPerPixel();
@@ -88,11 +154,14 @@ void QtPlayer::sliderPressedSlot()
 
 void QtPlayer::sliderReleasedSlot()
 {
-	mbSliderPressed = false;
-	double ratio = 0.0;
-	ratio = (double)ui.horizontalSlider->value() / (double)ui.horizontalSlider->maximum();
-	qDebug() << "QtPlayer ratio: " << ratio;
-	demuxThread->seek(ratio);
+	if (demuxThread)
+	{
+		mbSliderPressed = false;
+		double ratio = 0.0;
+		ratio = (double)ui.horizontalSlider->value() / (double)ui.horizontalSlider->maximum();
+		qDebug() << "QtPlayer ratio: " << ratio;
+		demuxThread->seek(ratio);
+	}
 }
 
 void QtPlayer::sliderMovedSlot(int nPosition)
@@ -114,6 +183,38 @@ void QtPlayer::timerEvent(QTimerEvent *event)
 			double ratio = (double)demuxThread->pts / (double)totalMs;
 			int nValue = ui.horizontalSlider->maximum()*ratio;
 			ui.horizontalSlider->setValue(nValue);
+
+			//播放时间显示
+			long long curPts = demuxThread->pts;
+			//double dCurTime = static_cast<double>((double)curPts / (double)1000);
+			long lCurTime = qRound(static_cast<double>((double)curPts / (double)1000));
+			cout << "lCurTime: " << lCurTime << endl;
+			int nSec = lCurTime % 60;
+			cout << "nSec: " << nSec << endl;
+			int nMin = lCurTime / 60 % 60;
+			cout << "nMin: " << nMin << endl;
+			int nHour = lCurTime / 3600;
+			cout << "nHour: " << nHour << endl;
+			QString strCurTime = QString("%1:%2:%3").arg(nHour, 2, 10, QLatin1Char('0'))
+				.arg(nMin, 2, 10, QLatin1Char('0')).arg(nSec, 2, 10, QLatin1Char('0'));
+			ui.curTime->setText(strCurTime);
+
+			//总时间
+			long lTotalTime = qRound(static_cast<double>((double)totalMs / (double)1000));
+			int nTsec = lTotalTime % 60;
+			int nTmin = lTotalTime / 60 % 60;
+			int nThour = lTotalTime / 3600;
+			QString strTotalTime = QString("%1:%2:%3").arg(nThour, 2, 10, QLatin1Char('0'))
+				.arg(nTmin, 2, 10, QLatin1Char('0')).arg(nTsec, 2, 10, QLatin1Char('0'));
+			ui.totalTime->setText(strTotalTime);
+			if ((lCurTime == lTotalTime) && mbIsHide)
+			{
+				ui.open_btn->show();
+				modPlayStatus(false);
+				//ui.openGLWidget->Init(demuxThread->mnWidth, demuxThread->mnHeight);
+				//ui.openGLWidget->clear();
+				mbIsHide = false;
+			}
 		}
 	}
 }
@@ -124,9 +225,13 @@ void QtPlayer::fastWard(double offset)
 	{
 		return;
 	}
+	if (!demuxThread)
+	{
+		return;
+	}
 	double ratio = 0.0;
 	long long curPts = demuxThread->pts;
-	qDebug() << "fastWard curPts1: " << curPts;
+	qDebug() << "fastWard curPts1: " << curPts<<endl;
 	long long totalMs = demuxThread->mlTotalMs;
 	if ((curPts >= (totalMs-offset)) && (curPts <totalMs))
 	{
@@ -136,7 +241,7 @@ void QtPlayer::fastWard(double offset)
 	{
 		curPts += offset;
 	}
-	qDebug() << "fastWard curPts2: " << curPts;
+	qDebug() << "fastWard curPts2: " << curPts << endl;
 	ratio = (double)curPts / (double)totalMs;
 	qDebug() << "fastWard ratio: " << ratio;
 	demuxThread->seek(ratio);
@@ -148,9 +253,13 @@ void QtPlayer::backWard(double offset)
 	{
 		return;
 	}
+	if (!demuxThread)
+	{
+		return;
+	}
 	double ratio = 0.0;
 	long long curPts = demuxThread->pts;
-	qDebug() << "backWard curPts3: " << curPts;
+	qDebug() << "backWard curPts3: " << curPts << endl;
 	long long totalMs = demuxThread->mlTotalMs;
 	if (curPts <= offset)
 	{
@@ -161,8 +270,8 @@ void QtPlayer::backWard(double offset)
 		curPts -= offset;
 	}
 	ratio = (double)curPts / (double)totalMs;
-	qDebug() << "backWard curPts4: " << curPts;
-	qDebug() << "backWard ratio: " << ratio;
+	qDebug() << "backWard curPts4: " << curPts << endl;
+	qDebug() << "backWard ratio: " << ratio << endl;
 	demuxThread->seek(ratio);
 }
 

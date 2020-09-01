@@ -14,7 +14,7 @@ public:
 	XDemux(QObject *parent = 0);
 	~XDemux();
 
-	void openMediaFile(const char *);
+	bool openMediaFile(const char *);
 	AVCodecContext *copyVideoParam();
 	AVCodecContext *copyAudioParam();
 	AVPacket *readOnePacket();

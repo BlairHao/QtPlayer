@@ -20,17 +20,20 @@ XVideoThread::~XVideoThread()
 	}
 }
 
-void XVideoThread::open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth, int nHeight)
+bool XVideoThread::open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth, int nHeight)
 {
 	if (!pCodecCtx)
 	{
-		return;
+		return false;
 	}
+	clear();
+	m_mutex.lock();
 	synpts = 0;
 	mpCodecCtx = pCodecCtx;
 	pVideoCall = pCall;
 	pVideoCall->Init(nWidth, nHeight);
-	pDecode->openCodecParam(mpCodecCtx);
+	m_mutex.unlock();
+	return pDecode->openCodecParam(mpCodecCtx);
 }
 
 void XVideoThread::clear()
@@ -108,7 +111,7 @@ void XVideoThread::run()
 			if (pVideoCall)
 			{
 				pVideoCall->Repaint(pframe);
-				//msleep(40);
+				//msleep(1);
 			}
 		}
 		m_mutex.unlock();

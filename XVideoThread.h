@@ -11,7 +11,7 @@ public:
 	XVideoThread();
 	~XVideoThread();
 
-	void open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth, int nHeight);
+	bool open(AVCodecContext *pCodecCtx, IVideoCall *pCall, int nWidth, int nHeight);
 	virtual void clear();
 	virtual void close();
 	bool repaintPts(AVPacket *pkt, long long seekPts);

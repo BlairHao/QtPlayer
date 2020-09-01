@@ -13,10 +13,9 @@ public:
 	XDemuxThread();
 	~XDemuxThread();
 
-	void openMediaFile(const char *strFilePath);
-	void openMediaFile(const char *, IVideoCall *);
+	bool openMediaFile(const char *, IVideoCall *);
 	void Start();
-	void pauseThread();
+	void pauseThread(bool bIsPause);
 	void StopThread();
 	void clear();
 	void seek(double nPosition);

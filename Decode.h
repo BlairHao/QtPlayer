@@ -10,7 +10,7 @@ public:
 	Decode();
 	~Decode();
 
-	void openCodecParam(AVCodecContext *);
+	bool openCodecParam(AVCodecContext *);
 	bool Send(AVPacket *);
 	AVFrame *Recv();
 	void clear();

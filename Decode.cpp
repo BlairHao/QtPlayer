@@ -27,14 +27,14 @@ Decode::~Decode()
 *
 * @param 解码器上下文
 */
-void Decode::openCodecParam(AVCodecContext *pCodecCtx)
+bool Decode::openCodecParam(AVCodecContext *pCodecCtx)
 {
-	m_mutex.lock();
 	if (!pCodecCtx)
 	{
-		m_mutex.unlock();
-		return;
+		return false;
 	}
+	close();
+	m_mutex.lock();
 	mpCodecCtx = pCodecCtx;
 	AVCodec *pCodec = avcodec_find_decoder(mpCodecCtx->codec_id);
 	if (!pCodec)
@@ -42,7 +42,7 @@ void Decode::openCodecParam(AVCodecContext *pCodecCtx)
 		m_mutex.unlock();
 		avcodec_free_context(&mpCodecCtx);
 		cout << "pCodec is NULL!!!!" << endl;
-		return;
+		return false;
 	}
 
 	int nRet = avcodec_open2(mpCodecCtx, pCodec, NULL);
@@ -51,10 +51,11 @@ void Decode::openCodecParam(AVCodecContext *pCodecCtx)
 		m_mutex.unlock();
 		avcodec_free_context(&mpCodecCtx);
 		cout << "avcodec_open2 error!!!" << endl;
-		return;
+		return false;
 	}
 
 	m_mutex.unlock();
+	return true;
 }
 
 /**
