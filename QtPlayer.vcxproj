@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="Decode.cpp" />
     <ClCompile Include="DecodeThread.cpp" />
+    <ClCompile Include="InputStream.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QtPlayer.cpp" />
     <ClCompile Include="XAudioPlay.cpp" />
@@ -135,6 +136,7 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
+    <QtUic Include="InputStream.ui" />
     <QtUic Include="QtPlayer.ui" />
   </ItemGroup>
   <ItemGroup>
@@ -143,6 +145,10 @@
   <ItemGroup>
     <ClInclude Include="Decode.h" />
     <ClInclude Include="DecodeThread.h" />
+    <QtMoc Include="InputStream.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets;.\SDL\include;.\ffmpeg\include;$(QTDIR)\include\QtMultimedia;C:\Program Files (x86)\Visual Leak Detector\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtMultimedia;C:\Program Files (x86)\Visual Leak Detector\include</IncludePath>
+    </QtMoc>
     <ClInclude Include="IVideoCall.h" />
     <QtMoc Include="XDemux.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets;.\SDL\include;.\ffmpeg\include</IncludePath>
@@ -152,7 +158,10 @@
     <ClInclude Include="XAudioThread.h" />
     <ClInclude Include="XDemuxThread.h" />
     <ClInclude Include="XResample.h" />
-    <ClInclude Include="XSlider.h" />
+    <QtMoc Include="XSlider.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets;.\SDL\include;.\ffmpeg\include;$(QTDIR)\include\QtMultimedia;C:\Program Files (x86)\Visual Leak Detector\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtMultimedia;C:\Program Files (x86)\Visual Leak Detector\include</IncludePath>
+    </QtMoc>
     <ClInclude Include="XVideoThread.h" />
     <QtMoc Include="XVideoWidget.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets</IncludePath>

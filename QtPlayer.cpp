@@ -5,6 +5,8 @@
 #include <QDateTime>
 #include <QString>
 #include <QLatin1Char>
+#include <QMenu>
+#include <QAction>
 
 using namespace std;
 
@@ -20,9 +22,10 @@ QtPlayer::QtPlayer(QWidget *parent)
 	connect(ui.previous_btn, SIGNAL(clicked()), this, SLOT(playPreviousFile()));
 	connect(ui.next_btn, SIGNAL(clicked()), this, SLOT(playNextFile()));
 	connect(ui.play_pause_btn, SIGNAL(clicked()), this, SLOT(pausePlay()));
-	connect(ui.horizontalSlider, SIGNAL(sliderPressed()), this, SLOT(sliderPressedSlot()));
+	connect(ui.horizontalSlider, SIGNAL(sliderPressed(int)), this, SLOT(sliderPressedSlot(int)));
 	connect(ui.horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(sliderReleasedSlot()));
 	connect(ui.horizontalSlider, SIGNAL(sliderMoved(int)), this, SLOT(sliderMovedSlot(int)));
+	connect(mpInputStream, SIGNAL(startPlaySignal(QString)), this, SLOT(playLiveStream(QString)));
 }
 
 QtPlayer::~QtPlayer()
@@ -35,12 +38,14 @@ void QtPlayer::initDataAndStatus()
 	mbSliderPressed = false;
 	mbIsHide = false;
 	mbIsPause = false;
+	mbIsLive = false;
 	mnScaleValue = 1.0;
 	mnPaperWidth = 800;
 	mnPaperHeight = 450;
 
-	demuxThread = new XDemuxThread;
-	demuxThread->Start();
+	mpInputStream = new InputStream;
+	mpDemuxThread = new XDemuxThread;
+	mpDemuxThread->Start();
 
 	setFocusPolicy(Qt::StrongFocus);
 	installEventFilter(this);
@@ -104,6 +109,60 @@ void QtPlayer::modPlayStatus(bool bIsPause)
 	}
 }
 
+void QtPlayer::playLiveStream(QString strFilePathName)
+{
+	if (startPlay(strFilePathName))
+	{
+		mbIsLive = true;
+		forbitChildControl(mbIsLive);
+	}
+}
+
+bool QtPlayer::startPlay(QString strFilePathName)
+{
+	if (mpInputStream)
+	{
+		mpInputStream->hide();
+	}
+	
+	if (!mpDemuxThread)
+	{
+		mpDemuxThread = new XDemuxThread();
+	}
+	//const char *strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";//CCTV1
+	if (mpDemuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget))
+	{
+		ui.open_btn->hide();
+		mbIsHide = true;
+		modPlayStatus(true);
+		mbIsPause = false;
+		return true;
+	}
+	return false;
+}
+
+void QtPlayer::forbitChildControl(bool isForbit)
+{
+	if (isForbit)
+	{
+		ui.stop_btn->setEnabled(false);
+		ui.previous_btn->setEnabled(false);
+		ui.play_pause_btn->setEnabled(false);
+		ui.next_btn->setEnabled(false);
+		ui.horizontalSlider->setValue(0);
+		ui.horizontalSlider->setEnabled(false);
+	}
+	else
+	{
+		ui.stop_btn->setEnabled(true);
+		ui.previous_btn->setEnabled(true);
+		ui.play_pause_btn->setEnabled(true);
+		ui.next_btn->setEnabled(true);
+		ui.horizontalSlider->setValue(0);
+		ui.horizontalSlider->setEnabled(true);
+	}
+}
+
 void QtPlayer::openFile()
 {
 	QString strFilePathName = QFileDialog::getOpenFileName(this, "open file", ".", "*.*");
@@ -112,30 +171,26 @@ void QtPlayer::openFile()
 		QMessageBox::information(this, "Tips", "strFilePathName is empty!!!");
 		return;
 	}
-	if (!demuxThread)
+	if (startPlay(strFilePathName))
 	{
-		demuxThread = new XDemuxThread();
+		mbIsLive = false;
+		forbitChildControl(mbIsLive);
 	}
-	/*if (!demuxThread->isRunning())
+}
+
+void QtPlayer::openNetworkStream()
+{
+	if (mpInputStream)
 	{
-		demuxThread->Start();
-	}*/
-	//const char *strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";//CCTV1
-	if (demuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget))
-	{
-		ui.open_btn->hide();
-		mbIsHide = true;
-		modPlayStatus(true);
-		mbIsPause = false;
+		mpInputStream->show();
 	}
-	//demuxThread->openMediaFile(strFilePathName, ui.openGLWidget);
 }
 
 void QtPlayer::stopPlaySlot()
 {
-	if (demuxThread)
+	if (mpDemuxThread)
 	{
-		demuxThread->close();
+		mpDemuxThread->close();
 		ui.horizontalSlider->setValue(0);
 		ui.open_btn->show();
 	}
@@ -143,15 +198,15 @@ void QtPlayer::stopPlaySlot()
 
 void QtPlayer::pausePlay()
 {
-	if (demuxThread)
+	if (mpDemuxThread)
 	{
 		if (mbIsPause)
 		{
-			demuxThread->pauseThread(false);
+			mpDemuxThread->pauseThread(false);
 		}
 		else
 		{
-			demuxThread->pauseThread(true);
+			mpDemuxThread->pauseThread(true);
 		}
 		modPlayStatus(mbIsPause);
 		mbIsPause = !mbIsPause;
@@ -176,32 +231,46 @@ void QtPlayer::resizeEvent(QResizeEvent *event)
 
 void QtPlayer::closeEvent(QCloseEvent *event)
 {
-	if (demuxThread)
+	if (mpDemuxThread)
 	{
-		demuxThread->StopThread();
+		mpDemuxThread->StopThread();
 	}
 }
 
-void QtPlayer::sliderPressedSlot()
+void QtPlayer::sliderPressedSlot(int nPosition)
 {
 	mbSliderPressed = true;
+	if (mbIsLive)
+	{
+		return;
+	}
+	ui.horizontalSlider->setValue(nPosition);
 }
 
 void QtPlayer::sliderReleasedSlot()
 {
-	if (demuxThread)
+	if (mbIsLive)
+	{
+		return;
+	}
+	if (mpDemuxThread)
 	{
 		mbSliderPressed = false;
 		double ratio = 0.0;
 		ratio = (double)ui.horizontalSlider->value() / (double)ui.horizontalSlider->maximum();
 		qDebug() << "QtPlayer ratio: " << ratio;
-		demuxThread->seek(ratio);
+		mpDemuxThread->seek(ratio);
 	}
 }
 
 void QtPlayer::sliderMovedSlot(int nPosition)
 {
 	mbSliderPressed = true;
+	if (mbIsLive)
+	{
+		return;
+	}
+	ui.horizontalSlider->setValue(nPosition);
 }
 
 void QtPlayer::timerEvent(QTimerEvent *event)
@@ -210,15 +279,19 @@ void QtPlayer::timerEvent(QTimerEvent *event)
 	{
 		return;
 	}
-	if (demuxThread)
+	if (mpDemuxThread)
 	{
-		long long totalMs = demuxThread->mlTotalMs;
+		long long totalMs = mpDemuxThread->mlTotalMs;
 		if (totalMs > 0)
 		{
-			double ratio = (double)demuxThread->pts / (double)totalMs;
+			if (mbIsLive)
+			{
+				return;
+			}
+			double ratio = (double)mpDemuxThread->pts / (double)totalMs;
 			int nValue = ui.horizontalSlider->maximum()*ratio;
 			ui.horizontalSlider->setValue(nValue);
-			refreshPlayTime(demuxThread->pts, totalMs);
+			refreshPlayTime(mpDemuxThread->pts, totalMs);
 		}
 	}
 }
@@ -262,14 +335,14 @@ void QtPlayer::fastWard(double offset)
 	{
 		return;
 	}
-	if (!demuxThread)
+	if (!mpDemuxThread)
 	{
 		return;
 	}
 	double ratio = 0.0;
-	long long curPts = demuxThread->pts;
+	long long curPts = mpDemuxThread->pts;
 	//qDebug() << "fastWard curPts1: " << curPts<<endl;
-	long long totalMs = demuxThread->mlTotalMs;
+	long long totalMs = mpDemuxThread->mlTotalMs;
 	if ((curPts >= (totalMs-offset)) && (curPts <totalMs))
 	{
 		curPts = totalMs;
@@ -281,7 +354,7 @@ void QtPlayer::fastWard(double offset)
 	//qDebug() << "fastWard curPts2: " << curPts << endl;
 	ratio = (double)curPts / (double)totalMs;
 	//qDebug() << "fastWard ratio: " << ratio;
-	demuxThread->seek(ratio);
+	mpDemuxThread->seek(ratio);
 }
 
 void QtPlayer::backWard(double offset)
@@ -290,14 +363,14 @@ void QtPlayer::backWard(double offset)
 	{
 		return;
 	}
-	if (!demuxThread)
+	if (!mpDemuxThread)
 	{
 		return;
 	}
 	double ratio = 0.0;
-	long long curPts = demuxThread->pts;
+	long long curPts = mpDemuxThread->pts;
 	//qDebug() << "backWard curPts3: " << curPts << endl;
-	long long totalMs = demuxThread->mlTotalMs;
+	long long totalMs = mpDemuxThread->mlTotalMs;
 	if (curPts <= offset)
 	{
 		curPts = 0;
@@ -309,7 +382,7 @@ void QtPlayer::backWard(double offset)
 	ratio = (double)curPts / (double)totalMs;
 	//qDebug() << "backWard curPts4: " << curPts << endl;
 	//qDebug() << "backWard ratio: " << ratio << endl;
-	demuxThread->seek(ratio);
+	mpDemuxThread->seek(ratio);
 }
 
 bool QtPlayer::eventFilter(QObject *target, QEvent *event)
@@ -328,6 +401,16 @@ bool QtPlayer::eventFilter(QObject *target, QEvent *event)
 		}
 	}
 	return false;
+}
+
+void QtPlayer::mouseReleaseEvent(QMouseEvent *event)
+{
+	if (event->button() == Qt::RightButton)
+	{
+		QMenu *pMenu = new QMenu(this);
+		pMenu->addAction(QIcon(), QStringLiteral("´ò¿ªÍøÂç´®Á÷"), this, SLOT(openNetworkStream()));
+		pMenu->exec(QCursor::pos());
+	}
 }
 
 void QtPlayer::wheelEvent(QWheelEvent *event)

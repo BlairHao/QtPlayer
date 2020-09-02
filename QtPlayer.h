@@ -8,6 +8,8 @@
 #include <QWheelEvent>
 #include <QPaintEvent>
 #include <QTimerEvent>
+#include <QMouseEvent>
+#include "InputStream.h"
 
 class QtPlayer : public QWidget
 {
@@ -33,6 +35,8 @@ public:
 	void backWard(double);
 	void modPlayStatus(bool bIsPause);
 	void refreshPlayTime(long long lCurPts, long long lTotalMs);
+	bool startPlay(QString);
+	void forbitChildControl(bool);
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void closeEvent(QCloseEvent *event);
@@ -40,13 +44,16 @@ protected:
 	void paintEvent(QPaintEvent *event);
 	void timerEvent(QTimerEvent *event);
 	bool eventFilter(QObject *target, QEvent *event);
+	void mouseReleaseEvent(QMouseEvent *event);
 public slots:
 	void openFile();
+	void openNetworkStream();
 	void stopPlaySlot();
 	void pausePlay();
-	void sliderPressedSlot();
+	void sliderPressedSlot(int);
 	void sliderReleasedSlot();
 	void sliderMovedSlot(int);
+	void playLiveStream(QString);
 
 private:
 	Ui::QtPlayerClass ui;
@@ -55,6 +62,7 @@ private:
 	bool mbSliderPressed;
 	bool mbIsHide;
 	bool mbIsPause;
+	bool mbIsLive;
 
 	const double SCALE_VALUE_MAX = 20.0;
 	const double SCALE_VALUE_MIN = 0.5;
@@ -72,5 +80,6 @@ private:
 	double mnOffset = 10000;
 	
 	QRect mRect;
-	XDemuxThread *demuxThread = NULL;
+	XDemuxThread *mpDemuxThread = NULL;
+	InputStream *mpInputStream = NULL;
 };
