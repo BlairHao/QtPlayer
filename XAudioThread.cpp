@@ -21,6 +21,23 @@ XAudioThread::~XAudioThread()
 		delete pDecode;
 		pDecode = NULL;
 	}
+
+	if (mpResample)
+	{
+		mpResample->close();
+		mMutex.lock();
+		delete mpResample;
+		mpResample = NULL;
+		mMutex.unlock();
+	}
+
+	if (mpAudioPlay)
+	{
+		mpAudioPlay->close();
+		mMutex.lock();
+		mpAudioPlay = NULL;
+		mMutex.unlock();
+	}
 }
 
 void XAudioThread::run()
@@ -35,37 +52,40 @@ void XAudioThread::run()
 			msleep(5);
 			continue;
 		}
-		AVPacket *pkt = Pop();
-		bool bFlag = pDecode->Send(pkt);
-		if (!bFlag)
+		if (pDecode)
 		{
-			mMutex.unlock();
-			msleep(1);
-			continue;
-		}
-		while (!mbIsExit)
-		{
-			AVFrame *pFrame = pDecode->Recv();
-			if (!pFrame)
+			AVPacket *pkt = Pop();
+			bool bFlag = pDecode->Send(pkt);
+			if (!bFlag)
 			{
-				break;
+				mMutex.unlock();
+				msleep(1);
+				continue;
 			}
-			//减去缓冲中未播放的时间
-			pts = pDecode->mlPts - mpAudioPlay->GetNoPlayMs();
-			int nSize = mpResample->resample(pFrame, pcm);
 			while (!mbIsExit)
 			{
-				if (nSize <= 0)
+				AVFrame *pFrame = pDecode->Recv();
+				if (!pFrame)
 				{
 					break;
 				}
-				if (mpAudioPlay->getFree() < nSize || mbIsPause)
+				//减去缓冲中未播放的时间
+				pts = pDecode->mlPts - mpAudioPlay->GetNoPlayMs();
+				int nSize = mpResample->resample(pFrame, pcm);
+				while (!mbIsExit)
 				{
-					msleep(1);
-					continue;
+					if (nSize <= 0)
+					{
+						break;
+					}
+					if (mpAudioPlay->getFree() < nSize || mbIsPause)
+					{
+						msleep(1);
+						continue;
+					}
+					mpAudioPlay->write(pcm, nSize);
+					break;
 				}
-				mpAudioPlay->write(pcm, nSize);
-				break;
 			}
 		}
 		//msleep(10);
@@ -78,7 +98,7 @@ void XAudioThread::close()
 {
 	pDecode->close();
 	DecodeThread::close();
-	if (!mpResample)
+	if (mpResample)
 	{
 		mpResample->close();
 		mMutex.lock();
@@ -126,6 +146,21 @@ bool XAudioThread::open(AVCodecContext *pCodecCtx, int nSampleRate, int nChannel
 	mMutex.lock();
 	pts = 0;
 	bool bFlag = true;
+	if (!mpAudioPlay)
+	{
+		mpAudioPlay = XAudioPlay::Get();
+	}
+
+	if (!mpResample)
+	{
+		mpResample = new XResample;
+	}
+
+	if (!pDecode)
+	{
+		pDecode = new Decode;
+	}
+	
 	if (!mpResample->open(pCodecCtx))
 	{
 		cout << "XResample open failed!" << endl;

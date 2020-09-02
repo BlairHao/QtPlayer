@@ -20,7 +20,6 @@ public:
 	//当前音频播放的pts
 	long long pts = 0;
 	bool mbIsPause = false;
-	bool mbIsExit = false;
 protected:
 	void run();
 

@@ -195,6 +195,26 @@ void XDemuxThread::clear()
 	mMutex.unlock();
 }
 
+void XDemuxThread::close()
+{
+	mMutex.lock();
+	if (mpXDemux)
+	{
+		mpXDemux->close();
+	}
+	if (mpVideoThread)
+	{
+		mpVideoThread->clear();
+	}
+	if (mpAudioThread)
+	{
+		mpAudioThread->clear();
+	}
+	pts = 0;
+	mlTotalMs = 0;
+	mMutex.unlock();
+}
+
 void XDemuxThread::seek(double nPosition)
 {
 	clear();

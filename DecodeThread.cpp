@@ -69,7 +69,7 @@ void DecodeThread::clear()
 
 void DecodeThread::close()
 {
-	//clear();
+	clear();
 
 	//等待线程退出
 	mbIsExit = true;

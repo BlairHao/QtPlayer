@@ -17,6 +17,8 @@ public:
 	QtPlayer(QWidget *parent = Q_NULLPTR);
 	~QtPlayer();
 
+	void initDataAndStatus();
+	void initUI();
 	void updateWidthOfPerPixel();
 	double calcWidthOfPerPixel(double &scale_value,
 		int &paper_width,
@@ -30,6 +32,7 @@ public:
 	void fastWard(double);
 	void backWard(double);
 	void modPlayStatus(bool bIsPause);
+	void refreshPlayTime(long long lCurPts, long long lTotalMs);
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void closeEvent(QCloseEvent *event);
@@ -39,6 +42,7 @@ protected:
 	bool eventFilter(QObject *target, QEvent *event);
 public slots:
 	void openFile();
+	void stopPlaySlot();
 	void pausePlay();
 	void sliderPressedSlot();
 	void sliderReleasedSlot();

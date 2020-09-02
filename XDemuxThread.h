@@ -18,6 +18,7 @@ public:
 	void pauseThread(bool bIsPause);
 	void StopThread();
 	void clear();
+	void close();
 	void seek(double nPosition);
 	int mnWidth;
 	int mnHeight;

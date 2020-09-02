@@ -13,6 +13,35 @@ QtPlayer::QtPlayer(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	initUI();
+	initDataAndStatus();
+	connect(ui.open_btn, SIGNAL(clicked()), this, SLOT(openFile()));
+	connect(ui.stop_btn, SIGNAL(clicked()), this, SLOT(stopPlaySlot()));
+	connect(ui.previous_btn, SIGNAL(clicked()), this, SLOT(playPreviousFile()));
+	connect(ui.next_btn, SIGNAL(clicked()), this, SLOT(playNextFile()));
+	connect(ui.play_pause_btn, SIGNAL(clicked()), this, SLOT(pausePlay()));
+	connect(ui.horizontalSlider, SIGNAL(sliderPressed()), this, SLOT(sliderPressedSlot()));
+	connect(ui.horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(sliderReleasedSlot()));
+	connect(ui.horizontalSlider, SIGNAL(sliderMoved(int)), this, SLOT(sliderMovedSlot(int)));
+}
+
+QtPlayer::~QtPlayer()
+{
+
+}
+void QtPlayer::initDataAndStatus()
+{
+	mbIsWheelScale = false;
+	mbSliderPressed = false;
+	mbIsHide = false;
+	mbIsPause = false;
+	mnScaleValue = 1.0;
+	mnPaperWidth = 800;
+	mnPaperHeight = 450;
+
+	demuxThread = new XDemuxThread;
+	demuxThread->Start();
+
 	setFocusPolicy(Qt::StrongFocus);
 	installEventFilter(this);
 	ui.stop_btn->installEventFilter(this);
@@ -21,21 +50,18 @@ QtPlayer::QtPlayer(QWidget *parent)
 	ui.play_pause_btn->installEventFilter(this);
 	ui.next_btn->installEventFilter(this);
 	ui.horizontalSlider->installEventFilter(this);
-	mbIsWheelScale = false;
-	mbSliderPressed = false;
-	mbIsHide = false;
-	mbIsPause = false;
-	mnScaleValue = 1.0;
-	mnPaperWidth = 800;
-	mnPaperHeight = 450;
-	connect(ui.open_btn, SIGNAL(clicked()), this, SLOT(openFile()));
-	connect(ui.play_pause_btn, SIGNAL(clicked()), this, SLOT(pausePlay()));
-	connect(ui.horizontalSlider, SIGNAL(sliderPressed()), this, SLOT(sliderPressedSlot()));
-	connect(ui.horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(sliderReleasedSlot()));
-	connect(ui.horizontalSlider, SIGNAL(sliderMoved(int)), this, SLOT(sliderMovedSlot(int)));
+
+	//ui.stop_btn->setEnabled(false);
+	//ui.previous_btn->setEnabled(false);
+	//ui.play_pause_btn->setEnabled(false);
+	//ui.next_btn->setEnabled(false);
+
 	updateWidthOfPerPixel();
 	startTimer(40);
+}
 
+void QtPlayer::initUI()
+{
 	ui.stop_btn->setFixedSize(32, 32);
 	ui.stop_btn->setStyleSheet("QPushButton{border-image: url(:/button/Resources/icon/stop_normal.png);}"
 		"QPushButton:hover{border-image: url(:/button/Resources/icon/stop_active.png);}"
@@ -58,11 +84,6 @@ QtPlayer::QtPlayer(QWidget *parent)
 		"QPushButton {background-color:transparent;}");
 }
 
-QtPlayer::~QtPlayer()
-{
-
-}
-
 void QtPlayer::modPlayStatus(bool bIsPause)
 {
 	if (bIsPause)
@@ -82,6 +103,7 @@ void QtPlayer::modPlayStatus(bool bIsPause)
 			"QPushButton {background-color:transparent;}");
 	}
 }
+
 void QtPlayer::openFile()
 {
 	QString strFilePathName = QFileDialog::getOpenFileName(this, "open file", ".", "*.*");
@@ -94,8 +116,11 @@ void QtPlayer::openFile()
 	{
 		demuxThread = new XDemuxThread();
 	}
+	/*if (!demuxThread->isRunning())
+	{
+		demuxThread->Start();
+	}*/
 	//const char *strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";//CCTV1
-	demuxThread->Start();
 	if (demuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget))
 	{
 		ui.open_btn->hide();
@@ -104,6 +129,16 @@ void QtPlayer::openFile()
 		mbIsPause = false;
 	}
 	//demuxThread->openMediaFile(strFilePathName, ui.openGLWidget);
+}
+
+void QtPlayer::stopPlaySlot()
+{
+	if (demuxThread)
+	{
+		demuxThread->close();
+		ui.horizontalSlider->setValue(0);
+		ui.open_btn->show();
+	}
 }
 
 void QtPlayer::pausePlay()
@@ -183,39 +218,41 @@ void QtPlayer::timerEvent(QTimerEvent *event)
 			double ratio = (double)demuxThread->pts / (double)totalMs;
 			int nValue = ui.horizontalSlider->maximum()*ratio;
 			ui.horizontalSlider->setValue(nValue);
-
-			//播放时间显示
-			long long curPts = demuxThread->pts;
-			//double dCurTime = static_cast<double>((double)curPts / (double)1000);
-			long lCurTime = qRound(static_cast<double>((double)curPts / (double)1000));
-			cout << "lCurTime: " << lCurTime << endl;
-			int nSec = lCurTime % 60;
-			cout << "nSec: " << nSec << endl;
-			int nMin = lCurTime / 60 % 60;
-			cout << "nMin: " << nMin << endl;
-			int nHour = lCurTime / 3600;
-			cout << "nHour: " << nHour << endl;
-			QString strCurTime = QString("%1:%2:%3").arg(nHour, 2, 10, QLatin1Char('0'))
-				.arg(nMin, 2, 10, QLatin1Char('0')).arg(nSec, 2, 10, QLatin1Char('0'));
-			ui.curTime->setText(strCurTime);
-
-			//总时间
-			long lTotalTime = qRound(static_cast<double>((double)totalMs / (double)1000));
-			int nTsec = lTotalTime % 60;
-			int nTmin = lTotalTime / 60 % 60;
-			int nThour = lTotalTime / 3600;
-			QString strTotalTime = QString("%1:%2:%3").arg(nThour, 2, 10, QLatin1Char('0'))
-				.arg(nTmin, 2, 10, QLatin1Char('0')).arg(nTsec, 2, 10, QLatin1Char('0'));
-			ui.totalTime->setText(strTotalTime);
-			if ((lCurTime == lTotalTime) && mbIsHide)
-			{
-				ui.open_btn->show();
-				modPlayStatus(false);
-				//ui.openGLWidget->Init(demuxThread->mnWidth, demuxThread->mnHeight);
-				//ui.openGLWidget->clear();
-				mbIsHide = false;
-			}
+			refreshPlayTime(demuxThread->pts, totalMs);
 		}
+	}
+}
+
+void QtPlayer::refreshPlayTime(long long lCurPts, long long lTotalMs)
+{
+	//播放时间显示
+	long lCurTime = qRound(static_cast<double>((double)lCurPts / (double)1000));
+	//cout << "lCurTime: " << lCurTime << endl;
+	int nSec = lCurTime % 60;
+	//cout << "nSec: " << nSec << endl;
+	int nMin = lCurTime / 60 % 60;
+	//cout << "nMin: " << nMin << endl;
+	int nHour = lCurTime / 3600;
+	//cout << "nHour: " << nHour << endl;
+	QString strCurTime = QString("%1:%2:%3").arg(nHour, 2, 10, QLatin1Char('0'))
+		.arg(nMin, 2, 10, QLatin1Char('0')).arg(nSec, 2, 10, QLatin1Char('0'));
+	ui.curTime->setText(strCurTime);
+
+	//总时间
+	long lTotalTime = qRound(static_cast<double>((double)lTotalMs / (double)1000));
+	int nTsec = lTotalTime % 60;
+	int nTmin = lTotalTime / 60 % 60;
+	int nThour = lTotalTime / 3600;
+	QString strTotalTime = QString("%1:%2:%3").arg(nThour, 2, 10, QLatin1Char('0'))
+		.arg(nTmin, 2, 10, QLatin1Char('0')).arg(nTsec, 2, 10, QLatin1Char('0'));
+	ui.totalTime->setText(strTotalTime);
+	if ((lCurTime == lTotalTime) && mbIsHide)
+	{
+		ui.open_btn->show();
+		modPlayStatus(false);
+		//ui.openGLWidget->Init(demuxThread->mnWidth, demuxThread->mnHeight);
+		//ui.openGLWidget->clear();
+		mbIsHide = false;
 	}
 }
 
@@ -231,7 +268,7 @@ void QtPlayer::fastWard(double offset)
 	}
 	double ratio = 0.0;
 	long long curPts = demuxThread->pts;
-	qDebug() << "fastWard curPts1: " << curPts<<endl;
+	//qDebug() << "fastWard curPts1: " << curPts<<endl;
 	long long totalMs = demuxThread->mlTotalMs;
 	if ((curPts >= (totalMs-offset)) && (curPts <totalMs))
 	{
@@ -241,9 +278,9 @@ void QtPlayer::fastWard(double offset)
 	{
 		curPts += offset;
 	}
-	qDebug() << "fastWard curPts2: " << curPts << endl;
+	//qDebug() << "fastWard curPts2: " << curPts << endl;
 	ratio = (double)curPts / (double)totalMs;
-	qDebug() << "fastWard ratio: " << ratio;
+	//qDebug() << "fastWard ratio: " << ratio;
 	demuxThread->seek(ratio);
 }
 
@@ -259,7 +296,7 @@ void QtPlayer::backWard(double offset)
 	}
 	double ratio = 0.0;
 	long long curPts = demuxThread->pts;
-	qDebug() << "backWard curPts3: " << curPts << endl;
+	//qDebug() << "backWard curPts3: " << curPts << endl;
 	long long totalMs = demuxThread->mlTotalMs;
 	if (curPts <= offset)
 	{
@@ -270,8 +307,8 @@ void QtPlayer::backWard(double offset)
 		curPts -= offset;
 	}
 	ratio = (double)curPts / (double)totalMs;
-	qDebug() << "backWard curPts4: " << curPts << endl;
-	qDebug() << "backWard ratio: " << ratio << endl;
+	//qDebug() << "backWard curPts4: " << curPts << endl;
+	//qDebug() << "backWard ratio: " << ratio << endl;
 	demuxThread->seek(ratio);
 }
 

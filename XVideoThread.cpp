@@ -46,7 +46,10 @@ void XVideoThread::clear()
 
 void XVideoThread::close()
 {
-
+	m_mutex.lock();
+	pDecode->close();
+	m_mutex.unlock();
+	DecodeThread::close();
 }
 
 bool XVideoThread::repaintPts(AVPacket *pkt, long long seekPts)

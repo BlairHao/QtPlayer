@@ -21,8 +21,7 @@ XSlider::~XSlider()
 void XSlider::mousePressEvent(QMouseEvent *e)
 {
 	double ratio = (double)e->pos().x() / (double)width();
-	setValue(ratio*maximum());
-	QSlider::sliderPressed();
+	emit sliderPressed(ratio*maximum());
 }
 
 void XSlider::mouseReleaseEvent(QMouseEvent *e)
@@ -33,6 +32,5 @@ void XSlider::mouseReleaseEvent(QMouseEvent *e)
 void XSlider::mouseMoveEvent(QMouseEvent *e)
 {
 	double ratio = (double)e->pos().x() / (double)width();
-	setValue(ratio*maximum());
-	QSlider::sliderMoved(ratio*maximum());
+	emit sliderMoved(ratio*maximum());
 }
