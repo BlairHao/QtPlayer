@@ -17,7 +17,6 @@ QtPlayer::QtPlayer(QWidget *parent)
 
 	initUI();
 	initDataAndStatus();
-	connect(ui.open_btn, SIGNAL(clicked()), this, SLOT(openFile()));
 	connect(ui.stop_btn, SIGNAL(clicked()), this, SLOT(stopPlaySlot()));
 	connect(ui.previous_btn, SIGNAL(clicked()), this, SLOT(playPreviousFile()));
 	connect(ui.next_btn, SIGNAL(clicked()), this, SLOT(playNextFile()));
@@ -157,7 +156,6 @@ bool QtPlayer::startPlay(QString strFilePathName)
 	//const char *strFilePathName = "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8";//CCTV1
 	if (mpDemuxThread->openMediaFile(strFilePathName.toLocal8Bit().data(), ui.openGLWidget))
 	{
-		ui.open_btn->hide();
 		mbIsHide = true;
 		modPlayStatus(true);
 		mbIsPause = false;
@@ -217,7 +215,6 @@ void QtPlayer::stopPlaySlot()
 	{
 		mpDemuxThread->close();
 		ui.horizontalSlider->setValue(0);
-		ui.open_btn->show();
 	}
 }
 
@@ -243,9 +240,6 @@ void QtPlayer::resizeEvent(QResizeEvent *event)
 	mnScaleValue = 1.0;
 	mnPaperX = 0;
 	mnPaperY = 0;
-	int nBtnX = this->width() / 2 - ui.open_btn->width() / 2;
-	int nBtnY = this->height() / 2 - ui.open_btn->height() / 2;
-	ui.open_btn->move(nBtnX, nBtnY);
 	ui.widget_2->move(50, this->height() - 100);
 	ui.widget_2->resize(this->width() - 100, 100);
 	ui.openGLWidget->resize(this->size());
@@ -346,7 +340,6 @@ void QtPlayer::refreshPlayTime(long long lCurPts, long long lTotalMs)
 	ui.totalTime->setText(strTotalTime);
 	if ((lCurTime == lTotalTime) && mbIsHide)
 	{
-		ui.open_btn->show();
 		modPlayStatus(false);
 		//ui.openGLWidget->Init(demuxThread->mnWidth, demuxThread->mnHeight);
 		//ui.openGLWidget->clear();
@@ -433,6 +426,7 @@ void QtPlayer::mouseReleaseEvent(QMouseEvent *event)
 	if (event->button() == Qt::RightButton)
 	{
 		QMenu *pMenu = new QMenu(this);
+		pMenu->addAction(QIcon(), QStringLiteral("打开视频文件"), this, SLOT(openFile()));
 		pMenu->addAction(QIcon(), QStringLiteral("打开网络串流"), this, SLOT(openNetworkStream()));
 		pMenu->exec(QCursor::pos());
 	}
