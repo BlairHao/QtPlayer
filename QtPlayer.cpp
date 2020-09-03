@@ -87,6 +87,31 @@ void QtPlayer::initUI()
 		"QPushButton:hover{border-image: url(:/button/Resources/icon/next_active.png);}"
 		"QPushButton:pressed{border-image: url(:/button/Resources/icon/next_normal.png);}"
 		"QPushButton {background-color:transparent;}");
+
+	/*//首先是设置主体
+	QSlider{
+	border-color: #bcbcbc;
+	}
+	QSlider::groove:horizontal {
+		border: 1px solid #999999;
+		height: 1px;
+		margin: 0px 0;
+		left: 5px; right: 5px;
+	}
+	//设置中间的那个滑动的键
+	QSlider::handle:horizontal
+	//还没有滑上去的地方
+	QSlider::add-page:horizontal
+	//已经划过的从地方
+	QSlider::sub-page:horizontal*/
+	ui.horizontalSlider->setStyleSheet("QSlider::groove:horizontal {border: 0px solid #bbb;}\
+       QSlider::sub-page:horizontal{background: rgb(235,97,0);border-radius: 0px;margin-top:8px;margin-bottom:8px;}\
+       QSlider::add-page:horizontal{background: rgb(255,255, 255);border: 0px solid #777;border-radius: 2px;margin-top:8px;margin-bottom:8px;}\
+       QSlider::handle:horizontal{background: rgb(255,153,102);border: 1px solid rgb(255,153,102);width: 14px;height:10px;border-radius: 7px;margin-top:2px;margin-bottom:2px;}\
+       QSlider::handle:horizontal:hover{background: rgb(255,128,6);border: 1px solid rgba(102,102,102,102);border-radius: 7px;}\
+       QSlider::sub-page:horizontal:disabled{background: #bbb;border-color: #999;}\
+       QSlider::add-page:horizontal:disabled{background: #eee;border-color: #999;}\
+       QSlider::handle:horizontal:disabled{background: #eee;border: 1px solid #aaa;border-radius: 4px;}");
 }
 
 void QtPlayer::modPlayStatus(bool bIsPause)
